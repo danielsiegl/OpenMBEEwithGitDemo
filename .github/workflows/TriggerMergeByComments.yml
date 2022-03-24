@@ -10,7 +10,7 @@ on:
     types: [created]
     
 env:
-  ModelName: DemoModel
+  ModelName: OpenMBEEwithGitSampleSysML
   GitHubProjectRoot: https://github.com/LieberLieber/LemonTree.Automation.Workflows
   LemonTreeAutomationFolder: C:\Program Files\LieberLieber\LemonTree.Automation
 
@@ -90,30 +90,30 @@ jobs:
         if: ${{ github.event.issue.pull_request && github.event.comment.body == '/merge/'}}
         run: |
           git fetch origin ${{steps.CommitIds.outputs.baseCommitId}}
-          $pointer = git cat-file blob ${{steps.CommitIds.outputs.baseCommitId}}:${{env.ModelName}}.eapx
+          $pointer = git cat-file blob ${{steps.CommitIds.outputs.baseCommitId}}:${{env.ModelName}}.mdkmodel
           $sha = ($pointer[1] -split(":"))[1]
           $shaPart1 = $sha.Substring(0,2)
           $shaPart2 = $sha.Substring(2,2)
           echo "Model SHA: $sha"
-          git cat-file --filters ${{steps.CommitIds.outputs.baseCommitId}}:${{env.ModelName}}.eapx | Out-Null
-          copy ".git\lfs\objects\$shaPart1\$shaPart2\$sha" "${{env.ModelName}}_base.eapx"
+          git cat-file --filters ${{steps.CommitIds.outputs.baseCommitId}}:${{env.ModelName}}.mdkmodel | Out-Null
+          copy ".git\lfs\objects\$shaPart1\$shaPart2\$sha" "${{env.ModelName}}_base.mdkmodel"
 
       - name: Download source branch head file
         run: |
           git fetch origin $env:GITHUB_HEAD_REF
-          $pointer = git cat-file blob ${{steps.CommitIds.outputs.sourceCommitId}}:${{env.ModelName}}.eapx
+          $pointer = git cat-file blob ${{steps.CommitIds.outputs.sourceCommitId}}:${{env.ModelName}}.mdkmodel
           $sha = ($pointer[1] -split(":"))[1]
           $shaPart1 = $sha.Substring(0,2)
           $shaPart2 = $sha.Substring(2,2)
           echo "Model SHA: $sha"
-          git cat-file --filters ${{steps.CommitIds.outputs.sourceCommitId}}":${{env.ModelName}}.eapx" | Out-Null
-          copy ".git\lfs\objects\$shaPart1\$shaPart2\$sha" "${{env.ModelName}}_head.eapx"
+          git cat-file --filters ${{steps.CommitIds.outputs.sourceCommitId}}":${{env.ModelName}}.mdkmodel" | Out-Null
+          copy ".git\lfs\objects\$shaPart1\$shaPart2\$sha" "${{env.ModelName}}_head.mdkmodel"
           
       - name: Merge EA model file
         if: ${{ github.event.issue.pull_request && github.event.comment.body == '/merge/'}}
         id: mergeEA
         run: |
-          &"${{env.LemonTreeAutomationFolder}}\LemonTree.Automation.exe" merge --base ${{env.ModelName}}_base.eapx --theirs ${{env.ModelName}}.eapx --mine ${{env.ModelName}}_head.eapx --out merged.eapx --abortOnConflict true
+          &"${{env.LemonTreeAutomationFolder}}\LemonTree.Automation.exe" merge --base ${{env.ModelName}}_base.mdkmodel --theirs ${{env.ModelName}}.mdkmodel --mine ${{env.ModelName}}_head.mdkmodel --out merged.mdkmodel --abortOnConflict true
           echo "::set-output name=result::$LASTEXITCODE"
           echo "Return code: $LASTEXITCODE"
           
@@ -151,8 +151,8 @@ jobs:
         if: ${{ steps.mergeEA.outputs.result == 0 }}
         shell: cmd
         run: |
-         copy /Y merged.eapx ${{env.ModelName}}.eapx
-         git add ${{env.ModelName}}.eapx
+         copy /Y merged.mdkmodel ${{env.ModelName}}.mdkmodel
+         git add ${{env.ModelName}}.mdkmodel
          git commit -m "Merged PR ${{steps.pr_details.outputs.number}}"
          git push
         
