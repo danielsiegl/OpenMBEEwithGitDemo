@@ -15,7 +15,7 @@ on:
       - review_requested
 
 env:
-  ModelName: OpenMBEEwithGitSampleSysML
+  ModelName: DemoModel
   ReviewSessionURL: https://lieberlieber.jfrog.io/artifactory/lemontree-generic-local
   LemonTreeAutomationFolder: C:\Program Files\LieberLieber\LemonTree.Automation
 
@@ -67,29 +67,29 @@ jobs:
       - name: Download base-commit file
         run: |
           git fetch origin ${{steps.CommitIds.outputs.baseCommitId}}
-          $pointer = git cat-file blob ${{steps.CommitIds.outputs.baseCommitId}}:${{env.ModelName}}.mdkmodel
+          $pointer = git cat-file blob ${{steps.CommitIds.outputs.baseCommitId}}:${{env.ModelName}}.eapx
           $sha = ($pointer[1] -split(":"))[1]
           $shaPart1 = $sha.Substring(0,2)
           $shaPart2 = $sha.Substring(2,2)
           echo "Model SHA: $sha"
-          git cat-file --filters ${{steps.CommitIds.outputs.baseCommitId}}:${{env.ModelName}}.mdkmodel | Out-Null
-          copy ".git\lfs\objects\$shaPart1\$shaPart2\$sha" "${{env.ModelName}}_base.mdkmodel"
+          git cat-file --filters ${{steps.CommitIds.outputs.baseCommitId}}:${{env.ModelName}}.eapx | Out-Null
+          copy ".git\lfs\objects\$shaPart1\$shaPart2\$sha" "${{env.ModelName}}_base.eapx"
 
       - name: Download source branch head file
         run: |
           git fetch origin $env:GITHUB_HEAD_REF
-          $pointer = git cat-file blob ${{steps.CommitIds.outputs.sourceCommitId}}":${{env.ModelName}}.mdkmodel"
+          $pointer = git cat-file blob ${{steps.CommitIds.outputs.sourceCommitId}}":${{env.ModelName}}.eapx"
           $sha = ($pointer[1] -split(":"))[1]
           $shaPart1 = $sha.Substring(0,2)
           $shaPart2 = $sha.Substring(2,2)
           echo "Model SHA: $sha"
-          git cat-file --filters ${{steps.CommitIds.outputs.sourceCommitId}}":${{env.ModelName}}.mdkmodel" | Out-Null
-          copy ".git\lfs\objects\$shaPart1\$shaPart2\$sha" "${{env.ModelName}}_head.mdkmodel"
+          git cat-file --filters ${{steps.CommitIds.outputs.sourceCommitId}}":${{env.ModelName}}.eapx" | Out-Null
+          copy ".git\lfs\objects\$shaPart1\$shaPart2\$sha" "${{env.ModelName}}_head.eapx"
 
       - name: Check for merge conflicts
         id: mergeCheck
         run: |
-          &"${{env.LemonTreeAutomationFolder}}\LemonTree.Automation.exe" merge --base ${{env.ModelName}}_base.mdkmodel --theirs ${{env.ModelName}}.mdkmodel --mine ${{env.ModelName}}_head.mdkmodel --out test.mdkmodel --sfs ${{ steps.session_file.outputs.result }} --abortOnConflict true
+          &"${{env.LemonTreeAutomationFolder}}\LemonTree.Automation.exe" merge --base ${{env.ModelName}}_base.eapx --theirs ${{env.ModelName}}.eapx --mine ${{env.ModelName}}_head.eapx --out test.eapx --sfs ${{ steps.session_file.outputs.result }} --abortOnConflict true
           echo "::set-output name=result::$LASTEXITCODE"
           echo "Return code: $LASTEXITCODE"
           if($LASTEXITCODE -eq 0){
@@ -115,7 +115,7 @@ jobs:
       - name: Create review session file
         if: steps.mergeCheck.outputs.result == 0
         run: |
-          &"${{env.LemonTreeAutomationFolder}}\LemonTree.Automation.exe" diff --theirs ${{env.ModelName}}_base.mdkmodel --mine ${{env.ModelName}}_head.mdkmodel --sfs ${{ steps.session_file.outputs.result }}
+          &"${{env.LemonTreeAutomationFolder}}\LemonTree.Automation.exe" diff --theirs ${{env.ModelName}}_base.eapx --mine ${{env.ModelName}}_head.eapx --sfs ${{ steps.session_file.outputs.result }}
 
       - name: Upload
         shell: cmd
